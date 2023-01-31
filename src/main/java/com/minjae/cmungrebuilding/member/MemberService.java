@@ -35,4 +35,25 @@ public class MemberService {
 
         return GlobalResponseDto.ok("회원가입 완료", null);
     }
+
+
+    //아이디 중복확인
+    public GlobalResponseDto<?> emailCheck(MemberRequestDto memberRequestDto) {
+       if(memberRepository.existsByEmail(memberRequestDto.getEmail())){
+           throw   new IllegalArgumentException();
+           //ToDo : 0131 예외코드 정리하여 수정하기
+       }
+       return GlobalResponseDto.ok("중복되지 않는 이메일 입니다.",null);
+    }
+
+    // 닉네임 중복확인
+    public GlobalResponseDto<?> nicknameCheck(MemberRequestDto memberRequestDto) {
+        if(memberRepository.existsByNickname(memberRequestDto.getNickname())) {
+            throw new IllegalArgumentException();
+            //ToDo : 0131 예외코드 정리하여 수정하기
+        }
+        return GlobalResponseDto.ok("중복되지 않은 닉네임 입니다.", null);
+    }
+
+    // ToDo : 0131 중복되는 함수 정리하기 (클린코드)
 }

@@ -38,11 +38,16 @@ public class MemberController {
 //
 //
     // 아이디 중복확인
-//    @PostMapping("/idcheck")
-//    public GlobalResponseDto<?>
+    @PostMapping("/idcheck")
+    public GlobalResponseDto<?> emailCheck (@RequestBody MemberRequestDto memberRequestDto) {
+        return memberService.emailCheck(memberRequestDto);
+    }
 
-//    // 닉네임 중복확인
-//    @PostMapping("/nicknamecheck")
+    // 닉네임 중복확인
+    @PostMapping("/nicknamecheck")
+    public GlobalResponseDto<?> nicknameCheck (@RequestBody MemberRequestDto memberRequestDto) {
+        return memberService.nicknameCheck(memberRequestDto);
+    }
 
     // 로그인
 }
