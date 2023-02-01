@@ -1,4 +1,4 @@
-package com.minjae.cmungrebuilding.member;
+package com.minjae.cmungrebuilding.Token;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;

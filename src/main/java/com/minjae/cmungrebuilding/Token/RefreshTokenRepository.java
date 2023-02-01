@@ -1,6 +1,7 @@
-package com.minjae.cmungrebuilding.member;
+package com.minjae.cmungrebuilding.Token;
 
 
+import com.minjae.cmungrebuilding.Token.RefreshToken;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
