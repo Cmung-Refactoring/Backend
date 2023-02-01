@@ -5,6 +5,7 @@ import com.minjae.cmungrebuilding.pet.Pet;
 import com.minjae.cmungrebuilding.post.Post;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @Getter
+@Setter
 public class Member {
 
     @Id
@@ -62,5 +64,13 @@ public class Member {
         this.nickname = memberRequestDto.getNickname();
         this.password = encodedPassword;
         this.userImage = MemberEnum.BASIC.getUrlValue();
+    }
+
+    public Member(String nickname, String encodePassword, String email, String userImage, Long kakaoId) {
+        this.nickname = nickname;
+        this.password = encodePassword;
+        this.email = email;
+        this.userImage = userImage;
+        this.kakaoId = kakaoId;
     }
 }
