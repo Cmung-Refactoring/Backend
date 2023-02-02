@@ -2,8 +2,14 @@ package com.minjae.cmungrebuilding.member;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.gson.JsonElement;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonParser;
+import com.minjae.cmungrebuilding.Token.RefreshToken;
+import com.minjae.cmungrebuilding.Token.RefreshTokenRepository;
+import com.minjae.cmungrebuilding.Token.TokenDto;
 import com.minjae.cmungrebuilding.global.GlobalResponseDto;
+import com.minjae.cmungrebuilding.jwtutil.JwtUtil;
 import com.minjae.cmungrebuilding.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +28,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +47,10 @@ public class SocialService {
 
     @Value("${kakao.rest.api}")
     private String kakaoRestApi;
+    @Value("${naver.client.id}")
+    private String naverClientId;
+    @Value("${naver.client.secret}")
+    private String naverClientSecret;
 
     // 카카오 회원가입 로직
     public GlobalResponseDto<?> kakaoLogin(String code, HttpServletResponse response) throws JsonProcessingException {
@@ -197,7 +210,148 @@ public class SocialService {
     }
 
 
-    //    // 네이버 회원가입 로직
-    public GlobalResponseDto<?> naverLogin(String code, String state, HttpServletResponse response) {
+    // 네이버 회원가입 로직
+    public GlobalResponseDto<Object> naverLogin(String code, String state, HttpServletResponse response) throws IOException {
+        NaverMemberInfoDto naverMemberInfoDto = getNaverMemberInfo ( code, state );
+
+        String naverId = naverMemberInfoDto.getNaverId ();
+        Member naverMember = memberRepository.findByNaverId ( naverId ).orElse ( null );
+
+        if (naverMember == null) {
+            // 네이버 사용자 이메일과 동일한 이메일을 가진 회원이 있는지 확인
+            String naverEmail = naverMemberInfoDto.getEmail ();
+            Member sameEmailMember = memberRepository.findByEmail ( naverEmail ).orElse ( null );
+
+
+            if (sameEmailMember != null) {
+                naverMember = sameEmailMember;
+
+                // 기존 회원정보에 네이버 Id 추가
+                naverMember.setNaverId ( naverId );
+            } else {
+                // 신규 회원가입
+
+                // username: naver nickname
+                String nickname = naverMemberInfoDto.getNickname ();
+
+
+                // password: random UUID
+                String password = UUID.randomUUID ().toString ();
+                String encodePassword = passwordEncoder.encode ( password );
+
+                // email: naver email
+                String email = naverMemberInfoDto.getEmail ();
+
+                // 프로필 사진 가져오기
+                String userImage = naverMemberInfoDto.getUserImage ();
+
+                naverMember = new Member ( email, nickname, password, userImage, naverId );
+            }
+
+            memberRepository.save ( naverMember );
+        }
+        naverForceLogin ( naverMember );
+
+        TokenDto tokenDto = jwtUtil.createAllToken ( naverMember.getEmail () );
+
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByMemberEmail ( naverMember.getEmail () );
+
+
+        // 로그아웃한 후 로그인을 다시 하는가?
+        RefreshToken refreshToken1;
+        if (refreshToken.isPresent ()) {
+            refreshToken1 = refreshToken.get ().updateToken ( tokenDto.getRefreshToken () );
+        } else {
+            refreshToken1 = new RefreshToken ( tokenDto.getRefreshToken (), naverMember.getEmail () );
+        }
+        refreshTokenRepository.save ( refreshToken1 );
+
+
+
+        //토큰을 header에 넣어서 클라이언트에게 전달하기
+        setHeader ( response, tokenDto );
+
+        LoginResDto loginResDto = new LoginResDto ( naverMember, naverMember.getUserImage () );
+
+
+
+        return GlobalResponseDto.ok ( naverMember.getNickname () + "님 반갑습니다.", loginResDto );
+    }
+
+
+        public NaverMemberInfoDto getNaverMemberInfo(String code, String state) throws IOException {
+
+            String codeReqURL = "https://nid.naver.com/oauth2.0/token";
+            String tokenReqURL = "https://openapi.naver.com/v1/nid/me";
+
+            // 코드를 네이버에 전달하여 엑세스 토큰 가져옴
+            JsonElement tokenElement = jsonElement(codeReqURL, null, code, state);
+
+            String access_Token = tokenElement.getAsJsonObject().get("access_token").getAsString();
+            String refresh_token = tokenElement.getAsJsonObject().get("refresh_token").getAsString();
+
+            // 엑세스 토큰을 네이버에 전달하여 유저정보 가져옴
+            JsonElement userInfoElement = jsonElement(tokenReqURL, access_Token, null, null);
+
+            String naverId = String.valueOf(userInfoElement.getAsJsonObject().get("response")
+                    .getAsJsonObject().get("id"));
+            String email = String.valueOf(userInfoElement.getAsJsonObject().get("response")
+                    .getAsJsonObject().get("email"));
+            String nickname = String.valueOf(userInfoElement.getAsJsonObject().get("response")
+                    .getAsJsonObject().get("nickname"));
+            String userImage = String.valueOf(userInfoElement.getAsJsonObject().get("response")
+                    .getAsJsonObject().get("profile_image"));
+
+
+            naverId = naverId.substring(1, naverId.length() - 1);
+            email = email.substring(1, email.length() - 1);
+            nickname = nickname.substring(1, nickname.length() - 1);
+            userImage = userImage.substring(1, userImage.length() - 1);
+
+            return new NaverMemberInfoDto(naverId, nickname, email, userImage, access_Token, refresh_token);
+        }
+
+    public JsonElement jsonElement(String reqUrl, String token, String code, String state) throws IOException {
+
+        URL url = new URL ( reqUrl );
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection ();
+
+        // POST 요청을 위해 기본값이 false인 setDoOutput을 true로
+        connection.setRequestMethod("POST");
+        connection.setDoOutput(true);
+
+        // POST 요청에 필요한 데이터 저장 후 전송
+        if (token == null) {
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+            String sb = "grant_type=authorization_code" +
+                    "&client_id=" + naverClientId +
+                    "&client_secret=" + naverClientSecret +
+                    "&redirect_uri= https://xn--922bn81b.com/auth/member/naver/callback" +
+                    "&code=" + code +
+                    "&state=" + state;
+            bw.write(sb);
+            bw.flush();
+            bw.close();
+        } else {
+            connection.setRequestProperty("Authorization", "Bearer " + token);
+        }
+
+        // 요청을 통해 얻은 JSON타입의 Response 메세지 읽어오기
+        BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        String line;
+        StringBuilder result = new StringBuilder();
+
+        while ((line = br.readLine()) != null) {
+            result.append(line);
+        }
+        br.close();
+
+        // Gson 라이브러리에 포함된 클래스로 JSON 파싱
+        return JsonParser.parseString(result.toString());
+    }
+    private void naverForceLogin(Member naverMember) {
+        UserDetails userDetails = new UserDetailsImpl(naverMember);
+        Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 }

@@ -73,4 +73,11 @@ public class Member {
         this.userImage = userImage;
         this.kakaoId = kakaoId;
     }
+    public Member(String email, String nickname, String password, String userImage, String naverId) {
+        this.email = email;
+        this.nickname = nickname;
+        this.password = password;
+        this.userImage = userImage;
+        this.naverId = naverId;
+    }
 }
