@@ -2,16 +2,20 @@ package com.minjae.cmungrebuilding.post;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.minjae.cmungrebuilding.member.Member;
+import com.minjae.cmungrebuilding.s3.Image;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.awt.*;
+import java.util.List;
 
 @Entity
 @NoArgsConstructor
 @Getter
-public class Post {
+@Setter
+public class Post extends Timestamped{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +37,9 @@ public class Post {
     private String local;
 
     @Column(nullable = false)
+    private String date;
+
+    @Column(nullable = false)
     private String category;
 
     @JsonBackReference
@@ -41,8 +48,8 @@ public class Post {
     private Member member;
     // nickname을 원래 따로 컬럼값으로 가지고 있었는데, member를 테이블 조인하면 언제든 원할 때 사용할 수 있으니 nickname column은 제외했습니다.
 
-//    @JsonBackReference
-//    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-//    private List<Image> image;
+    @JsonBackReference
+    @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private List<Image> image;
 
 }
