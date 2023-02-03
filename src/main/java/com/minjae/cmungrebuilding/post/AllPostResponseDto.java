@@ -8,6 +8,7 @@ import lombok.Setter;
 
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -26,7 +27,7 @@ public class AllPostResponseDto {
     private String date;
     private int price;
     private List<String> imgs;
-    private String createdAt;
+    private LocalDateTime createdAt;
 
     public AllPostResponseDto(Post post, List<String> imgs) {
         this.id = post.getId();
@@ -39,10 +40,7 @@ public class AllPostResponseDto {
         this.date = post.getDate();
         this.price = post.getPrice();
         this.imgs = imgs;
-
-        // 시간 처리
-        Date date = Timestamp.valueOf(post.getCreatedAt());
-        this.createdAt = Time.calculateTime(date);
+        this.createdAt = post.getCreatedAt();
     }
 }
 
