@@ -2,13 +2,11 @@ package com.minjae.cmungrebuilding.post;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.minjae.cmungrebuilding.member.Member;
-import com.minjae.cmungrebuilding.s3.Image;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.awt.*;
 import java.util.List;
 
 @Entity
@@ -50,6 +48,16 @@ public class Post extends Timestamped{
 
     @JsonBackReference
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private List<Image> image;
+    private List<Image> imageList;
 
+    public Post(PostRequestDto postRequestDto, Member member) {
+        this.title = postRequestDto.getTitle();
+        this.content = postRequestDto.getContent();
+        this.price = postRequestDto.getPrice();
+        this.state = postRequestDto.getState();
+        this.local = postRequestDto.getLocal();
+        this.date = postRequestDto.getDate();
+        this.category = postRequestDto.getCategory();
+        this.member = member;
+    }
 }
