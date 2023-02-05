@@ -5,7 +5,6 @@ import com.minjae.cmungrebuilding.member.Member;
 import com.minjae.cmungrebuilding.s3.S3Uploader;
 import com.minjae.cmungrebuilding.util.ServiceUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,6 +61,24 @@ public class PostService {
         return GlobalResponseDto.ok("조회 성공!", allPostResponseDtos);
     }
 
+    // 게시글 하나 조회 로직
+    public GlobalResponseDto<?> getOnePost(Long postId) {
+
+        return GlobalResponseDto.ok("게시물 조회 성공!", postResponseDto);
+    }
+
+    // 게시글 삭제 로직
+    public GlobalResponseDto<?> deletePost(Long postId, Member member) {
+
+        return GlobalResponseDto.ok("게시글 삭제 성공", );
+    }
+
+    // 게시글 수정 로직
+    public GlobalResponseDto<?> updatePost(Long postId, List<MultipartFile> multipartFiles, PostRequestDto postRequestDto, Member member) {
+
+        return GlobalResponseDto.ok("", );
+    }
+
     //등록 할 이미지가 있다면 사용
     public void createImageIfNotNull(List<MultipartFile> multipartFile, Post post) {
         if (multipartFile != null && multipartFile.size() > 0) {
@@ -74,6 +91,7 @@ public class PostService {
             post.setImageList(imageList);
         }
     }
+
 
 
 }
