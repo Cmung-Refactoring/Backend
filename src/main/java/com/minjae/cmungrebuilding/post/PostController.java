@@ -23,32 +23,32 @@ public class PostController {
                                            @AuthenticationPrincipal UserDetailsImpl userDetails) {
         return postService.createPost(multipartFiles, postRequestDto, userDetails.getMember());
     }
-//
-//    // 게시글 전체 목록 조회
-//    @GetMapping
-//    public GlobalResponseDto<?> getAllPosts() {
-//        return postService.getAllPosts();
-//    }
-//
-//    // 게시글 상세 조회 로직
-//    @GetMapping("/{postId}")
-//    public GlobalResponseDto<?> getOnePost(@PathVariable Long postId){
-//        return postService.getOnePost(postId);
-//    }
-//
-//    // 게시글 삭제 로직
-//    @DeleteMapping("/{postId}")
-//    public GlobalResponseDto<?> deletePost(@RequestParam Long postId,
-//                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
-//        return postService.deletePost(postId, userDetails.getMember());
-//    }
-//
-//    // 게시글 수정 로직
-//    @PutMapping("/{postId}")
-//    public GlobalResponseDto<?> updatePost(@RequestPart(value = "postImg", required = false) List<MultipartFile> multipartFiles,
-//                                           @PathVariable Long postId,
-//                                           @RequestPart PostRequestDto postRequestDto,
-//                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
-//        return postService.updatePost(postId, multipartFiles, postRequestDto, userDetails.getMmeber());
-//    }
+
+    // 게시글 전체 목록 조회
+    @GetMapping
+    public GlobalResponseDto<?> getAllPosts() {
+        return postService.getAllPosts();
+    }
+
+    // 게시글 상세 조회 로직
+    @GetMapping("/{postId}")
+    public GlobalResponseDto<?> getOnePost(@PathVariable Long postId){
+        return postService.getOnePost(postId);
+    }
+
+    // 게시글 삭제 로직
+    @DeleteMapping("/{postId}")
+    public GlobalResponseDto<?> deletePost(@RequestParam Long postId,
+                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return postService.deletePost(postId, userDetails.getMember());
+    }
+
+    // 게시글 수정 로직
+    @PutMapping("/{postId}")
+    public GlobalResponseDto<?> updatePost(@RequestPart(value = "postImg", required = false) List<MultipartFile> multipartFiles,
+                                           @PathVariable Long postId,
+                                           @RequestPart PostRequestDto postRequestDto,
+                                           @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        return postService.updatePost(postId, multipartFiles, postRequestDto, userDetails.getMember());
+    }
 }
