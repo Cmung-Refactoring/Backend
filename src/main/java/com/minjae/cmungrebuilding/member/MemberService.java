@@ -6,10 +6,16 @@ import com.minjae.cmungrebuilding.Token.TokenDto;
 import com.minjae.cmungrebuilding.exception.CustomException;
 import com.minjae.cmungrebuilding.exception.ErrorCode;
 import com.minjae.cmungrebuilding.global.GlobalResponseDto;
+import com.minjae.cmungrebuilding.jwtutil.JwtUtil;
+import com.minjae.cmungrebuilding.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.web.server.Http2;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +23,8 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtUtil jwtUtil;
 
     //회원가입
     @Transactional
@@ -58,6 +66,48 @@ public class MemberService {
             //ToDo : 0131 예외코드 정리하여 수정하기
         }
         return GlobalResponseDto.ok("중복되지 않은 닉네임 입니다.", null);
+    }
+
+    public GlobalResponseDto<?> login(LoginRequestDto loginRequestDto, HttpServletResponse response) {
+        Member member = memberRepository.findByEmail(loginRequestDto.getEmail()).orElseThrow(
+                () -> new CustomException(ErrorCode.NotFoundMember));
+
+        if(!passwordEncoder.matches(member.getPassword(), loginRequestDto.getPassword())){
+            throw new CustomException(ErrorCode.WrongPassword);
+        }
+
+        TokenDto tokenDto = jwtUtil.createAllToken(loginRequestDto.getEmail());
+
+        Optional<RefreshToken> refreshToken = refreshTokenRepository.findByMemberEmail ( loginRequestDto.getEmail () );
+
+        if (refreshToken.isPresent ()) {
+            refreshTokenRepository.save ( refreshToken.get ().updateToken ( tokenDto.getRefreshToken () ) );
+        } else {
+            RefreshToken newToken = new RefreshToken ( tokenDto.getRefreshToken (), loginRequestDto.getEmail () );
+            refreshTokenRepository.save ( newToken );
+        }
+
+        setHeader ( response, tokenDto );
+
+        LoginResDto loginResDto = new LoginResDto ( member, member.getUserImage () );
+        return GlobalResponseDto.ok (  member.getNickname () + "님 반갑습니다.",loginResDto );
+    }
+
+    private void setHeader(HttpServletResponse response, TokenDto tokenDto) {
+        response.addHeader ( JwtUtil.ACCESS_TOKEN, tokenDto.getAccessToken () );
+        response.addHeader ( JwtUtil.REFRESH_TOKEN, tokenDto.getRefreshToken () );
+    }
+
+    public GlobalResponseDto<?> logout(UserDetailsImpl userDetails) {
+        refreshTokenRepository.deleteById(userDetails.getMember().getId());
+
+        return GlobalResponseDto.ok("로그아웃 되었습니다",null);
+    }
+
+    public GlobalResponseDto<?> signOut(Member member) {
+        memberRepository.deleteById(member.getId());
+
+        return GlobalResponseDto.ok("회원탈퇴가 완료되었습니다", null);
     }
 
     // ToDo : 0131 중복되는 함수 정리하기 (클린코드)

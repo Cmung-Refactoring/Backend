@@ -211,7 +211,7 @@ public class SocialService {
 
 
     // 네이버 회원가입 로직
-    public GlobalResponseDto<Object> naverLogin(String code, String state, HttpServletResponse response) throws IOException {
+    public GlobalResponseDto<Object> naverLogin(String code, String state, HttpServletResponse response) {
         NaverMemberInfoDto naverMemberInfoDto = getNaverMemberInfo ( code, state );
 
         String naverId = naverMemberInfoDto.getNaverId ();
