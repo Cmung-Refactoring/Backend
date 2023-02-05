@@ -2,7 +2,11 @@ package com.minjae.cmungrebuilding.member;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.minjae.cmungrebuilding.global.GlobalResponseDto;
+import com.minjae.cmungrebuilding.security.UserDetailsImpl;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -52,7 +56,21 @@ public class MemberController {
 
     // 로그인
 
+    @PostMapping("/login")
+    public GlobalResponseDto<?> login(@RequestBody LoginRequestDto loginRequestDto, HttpServletResponse response){
+
+        return memberService.login(loginRequestDto,response);
+    }
+
     // 로그아웃
+    @GetMapping("/logout")
+    public GlobalResponseDto<?> logOut(@AuthenticationPrincipal UserDetailsImpl userDetails){
+        return memberService.logout(userDetails);
+    }
 
     // 회원 탈퇴 기능
+    @GetMapping("/")
+    public GlobalResponseDto<?> signOut(@AuthenticationPrincipal UserDetailsImpl userDetails){
+        memberService.signOut(userDetails.getMember());
+    }
 }
